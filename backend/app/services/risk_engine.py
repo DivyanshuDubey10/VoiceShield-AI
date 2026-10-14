@@ -12,15 +12,15 @@ class RiskEngine:
         "OTP_REQUEST": {
             "action_regex": (
                 r"(?i)(?:"
-                r"(?:otp|o\s*t\s*p|one\s*time\s*password|pin|password|ओ\s*टी\s*पी|ओटीपी|पिन|पासवर्ड)\s*.*?"
-                r"(?:tell|share|read|give|verify|batao|bataiye|de\s*do|dijiye|bhejo|bhej\s*do|बताइ[येए]|बताओ|दीजि[येए]|शेयर|भेज[ोए])"
+                r"(?:otp|o\s*t\s*p|one\s*time\s*password|pin|password|verification\s*code|security\s*code|auth\s*code|ओ\s*टी\s*पी|ओटीपी|पिन|पासवर्ड)\s*.*?"
+                r"(?:tell|share|read|give|verify|disclose|provide|forward|send|batao|bataiye|de\s*do|dijiye|bhejo|bhej\s*do|बताइ[येए]|बताओ|दीजि[येए]|शेयर|भेज[ोए])"
                 r"|"
-                r"(?:tell|share|read|give|verify|batao|bataiye|de\s*do|dijiye|bhejo|bhej\s*do|बताइ[येए]|बताओ|दीजि[येए]|शेयर|भेज[ोए])\s*.*?"
-                r"(?:otp|o\s*t\s*p|one\s*time\s*password|pin|password|ओ\s*टी\s*पी|ओटीपी|पिन|पासवर्ड)"
+                r"(?:tell|share|read|give|verify|disclose|provide|forward|send|batao|bataiye|de\s*do|dijiye|bhejo|bhej\s*do|बताइ[येए]|बताओ|दीजि[येए]|शेयर|भेज[ोए])\s*.*?"
+                r"(?:otp|o\s*t\s*p|one\s*time\s*password|pin|password|verification\s*code|security\s*code|auth\s*code|ओ\s*टी\s*पी|ओटीपी|पिन|पासवर्ड)"
                 r")"
             ),
             "severity": "HIGH",
-            "rationale": "Explicit request to disclose a one-time password (OTP) or PIN."
+            "rationale": "Explicit request to disclose a one-time password (OTP), PIN, or verification code."
         },
         "PAYMENT_PRESSURE": {
             "action_regex": (
@@ -86,7 +86,7 @@ class RiskEngine:
     # Phrases indicating defensive guidance or educational discussions across English, Hindi, and Hinglish
     PROTECTIVE_CONTEXT = (
         r"(?i)(?:"
-        r"\b(?:never|do\s+not|don't)\s+(?:share|give|tell|disclose|install|download)\b|"
+        r"\b(?:never|do\s+not|don't|should\s+not|must\s+not)\s+(?:share|give|tell|disclose|provide|forward|install|download)\b|"
         r"\b(?:will\s+never\s+ask|scammers|impersonate|warning|protect|beware|official\s+warning|advisory)\b|"
         r"\b(?:kisi\s+ko\s+mat\s+(?:dena|batao|share)|mat\s+(?:dena|batao|bhejo|share|karna)|savdhaan|satark)\b|"
         r"(?:कभी.*?मत|शेयर\s*मत|मत\s*(?:देना|बताओ|दीजिए|भेजो)|सावधान|सतर्क|बैंक\s*कभी\s*नहीं\s*मांगता)"

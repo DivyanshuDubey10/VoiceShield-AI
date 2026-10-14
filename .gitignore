@@ -32,3 +32,4 @@ build/
 *.mp3
 *.ogg
 backend/data/
+!samples/*.wav

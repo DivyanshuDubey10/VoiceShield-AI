@@ -38,7 +38,8 @@ class GnaniSTTService:
         effective_language = lang_map.get(language.lower(), language)
 
         data = {
-            "language_code": effective_language
+            "language_code": effective_language,
+            "format": "transcribe"
         }
 
         try:
@@ -69,7 +70,7 @@ class GnaniSTTService:
                 )
 
             if "transcript" not in result:
-                logger.error(f"Gnani STT response missing 'transcript' key: {result}")
+                logger.error(f"Gnani STT response missing 'transcript' key. Keys: {list(result.keys()) if isinstance(result, dict) else type(result)}")
                 raise HTTPException(
                     status_code=502,
                     detail="Transcription provider response is missing 'transcript' field."
@@ -93,7 +94,7 @@ class GnaniSTTService:
             return (transcript.strip(), False)
             
         except httpx.HTTPStatusError as e:
-            logger.error(f"Gnani STT HTTP {e.response.status_code} error: {e.response.text}")
+            logger.error(f"Gnani STT HTTP {e.response.status_code} error")
             raise HTTPException(
                 status_code=502,
                 detail=f"Transcription provider returned an error: HTTP {e.response.status_code}"

@@ -90,7 +90,7 @@ class GnaniTTSService:
                     return (audio_b64, False)
             
         except httpx.HTTPStatusError as e:
-            logger.error(f"Gnani TTS HTTP {e.response.status_code} error: {e.response.text}")
+            logger.error(f"Gnani TTS HTTP {e.response.status_code} error")
             raise HTTPException(
                 status_code=502,
                 detail=f"TTS provider returned an error: HTTP {e.response.status_code}"

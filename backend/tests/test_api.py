@@ -97,6 +97,19 @@ def test_risk_engine_explicit_credential_disclosure():
     indicators = engine.analyze_transcript(transcript)
     assert engine.calculate_risk_level(indicators) == "HIGH"
 
+def test_risk_engine_disclose_verification_code_to_party():
+    engine = RiskEngine()
+    transcript = "Please disclose your verification code to the agent to confirm the transaction."
+    indicators = engine.analyze_transcript(transcript)
+    assert engine.calculate_risk_level(indicators) == "HIGH"
+    assert any(ind.indicator_type == "OTP_REQUEST" for ind in indicators)
+
+def test_risk_engine_protective_verification_code_advice():
+    engine = RiskEngine()
+    transcript = "Never disclose your verification code or banking passwords to any caller."
+    indicators = engine.analyze_transcript(transcript)
+    assert engine.calculate_risk_level(indicators) == "LOW"
+
 def test_risk_engine_protective_discussion_remote_access():
     engine = RiskEngine()
     transcript = "Do not install AnyDesk if a caller asks you to."
@@ -175,6 +188,22 @@ def test_oversized_audio_upload(monkeypatch):
     )
     assert response.status_code == 413
     assert "exceeds maximum size limit" in response.json()["detail"]
+
+def test_analyze_empty_transcript_bad_request():
+    response = client.post(
+        "/api/v1/analyze",
+        json={"transcript": "   ", "language": "en-IN"}
+    )
+    assert response.status_code == 400
+    assert "Empty transcript provided" in response.json()["detail"]
+
+def test_synthesize_empty_text_bad_request():
+    response = client.post(
+        "/api/v1/synthesize",
+        json={"text": "   ", "language": "en-IN"}
+    )
+    assert response.status_code == 400
+    assert "cannot be empty" in response.json()["detail"]
 
 # -------------------------------------------------------------
 # 4. Explicit Mock / Demo Mode Tests (When API Key is Missing)

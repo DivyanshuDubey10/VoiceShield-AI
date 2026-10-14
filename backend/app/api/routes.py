@@ -54,6 +54,11 @@ async def transcribe_audio(
 @router.post("/analyze", response_model=AnalysisResponse)
 async def analyze_transcript(request: AnalysisRequest):
     """Analyzes a transcript for voice scam indicators using deterministic rules."""
+    if not request.transcript or not request.transcript.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Empty transcript provided for analysis."
+        )
     indicators = risk_engine.analyze_transcript(request.transcript)
     risk_level = risk_engine.calculate_risk_level(indicators)
     guidance = guidance_service.generate_guidance(risk_level, indicators)
@@ -70,6 +75,11 @@ async def analyze_transcript(request: AnalysisRequest):
 @router.post("/synthesize", response_model=TTSResponse)
 async def synthesize_speech(request: TTSRequest):
     """Synthesizes safety guidance into speech using Gnani Timbre TTS."""
+    if not request.text or not request.text.strip():
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Text for speech synthesis cannot be empty."
+        )
     audio_b64, is_demo = await tts_service.generate_audio(
         text=request.text, 
         language=request.language,

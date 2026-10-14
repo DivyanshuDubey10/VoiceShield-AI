@@ -55,7 +55,13 @@ export const App: React.FC = () => {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setFile(e.target.files[0]);
+      const selected = e.target.files[0];
+      if (selected.size > 20 * 1024 * 1024) {
+        setError('Selected file exceeds the maximum 20MB limit. Please choose a smaller recording.');
+        setFile(null);
+        return;
+      }
+      setFile(selected);
       setResult(null);
       setError(null);
       setTtsAudioUrl(null);
@@ -124,7 +130,8 @@ export const App: React.FC = () => {
       });
 
       if (!res.ok) {
-        throw new Error('TTS voice synthesis failed');
+        const errorData = await res.json().catch(() => null);
+        throw new Error(errorData?.detail || 'TTS voice synthesis failed');
       }
 
       const data = await res.json();
@@ -136,8 +143,9 @@ export const App: React.FC = () => {
           ttsAudioRef.current.play();
         }
       }
-    } catch {
-      setError('Failed to generate voice guidance.');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to generate voice guidance.';
+      setError(msg);
       setTtsPlaying(false);
     }
   };
@@ -242,7 +250,7 @@ export const App: React.FC = () => {
                 {file ? file.name : 'Choose an audio file to analyze'}
               </span>
               <span className="text-xs text-neutral-500">
-                Supports WAV, MP3, M4A or OGG (Max 25MB)
+                Supports WAV, MP3, M4A or OGG (Max 20MB)
               </span>
             </label>
 
@@ -317,6 +325,29 @@ export const App: React.FC = () => {
           {/* Analysis Results */}
           {result && (
             <div className="border border-neutral-800 rounded-lg p-6 bg-neutral-950 space-y-6">
+              {/* Demo Mode / Live Mode Banner */}
+              {result.is_demo ? (
+                <div className="border border-amber-500/40 bg-amber-500/10 rounded-md p-3 text-xs text-amber-300 flex items-start gap-2.5">
+                  <AlertCircle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold uppercase tracking-wide">Demo Mode Active</span>
+                    <p className="text-amber-200/80 text-[11px] mt-0.5">
+                      Running in simulated demonstration mode (live provider credentials unconfigured). Transcription and analysis are simulated safely to protect API quota.
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="border border-emerald-500/30 bg-emerald-500/10 rounded-md p-3 text-xs text-emerald-300 flex items-start gap-2.5">
+                  <Check className="w-4 h-4 text-emerald-400 flex-shrink-0 mt-0.5" />
+                  <div>
+                    <span className="font-semibold uppercase tracking-wide">Live Provider Mode</span>
+                    <p className="text-emerald-200/80 text-[11px] mt-0.5">
+                      Audio transcribed via Gnani Prisma STT API.
+                    </p>
+                  </div>
+                </div>
+              )}
+
               {/* Verdict Header */}
               <div className="flex flex-col sm:flex-row sm:items-center justify-between border-b border-neutral-800 pb-4 gap-3">
                 <div className="flex items-center gap-3">
