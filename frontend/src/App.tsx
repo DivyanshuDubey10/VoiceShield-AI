@@ -7,12 +7,10 @@ import {
   Check, 
   RotateCcw, 
   Download,
-  AlertCircle,
-  Settings,
-  Globe
+  AlertCircle
 } from 'lucide-react';
 
-const DEFAULT_API_URL = (import.meta.env.VITE_API_URL || 'http://localhost:8000').replace(/\/+$/, '');
+const API_BASE_URL = (import.meta.env.VITE_API_URL || 'https://voiceshield-ai-i3ze.onrender.com').replace(/\/+$/, '');
 
 interface Evidence {
   excerpt: string;
@@ -37,28 +35,6 @@ export const App: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<AnalysisResponse | null>(null);
-
-  // API Configuration
-  const [apiUrl, setApiUrl] = useState<string>(() => {
-    return localStorage.getItem('voiceshield_api_url') || DEFAULT_API_URL;
-  });
-  const [showApiConfig, setShowApiConfig] = useState<boolean>(false);
-
-  const handleApiUrlChange = (newUrl: string) => {
-    const clean = newUrl.trim().replace(/\/+$/, '');
-    setApiUrl(clean);
-    if (clean && clean !== DEFAULT_API_URL) {
-      localStorage.setItem('voiceshield_api_url', clean);
-    } else {
-      localStorage.removeItem('voiceshield_api_url');
-    }
-  };
-
-  const isRemoteDomainWithLocalApi = 
-    typeof window !== 'undefined' && 
-    window.location.hostname !== 'localhost' && 
-    window.location.hostname !== '127.0.0.1' && 
-    apiUrl.includes('localhost');
 
   // Audio Guidance TTS
   const [ttsAudioUrl, setTtsAudioUrl] = useState<string | null>(null);
@@ -109,8 +85,7 @@ export const App: React.FC = () => {
       formData.append('audio_file', file);
       formData.append('language', language);
 
-      const targetEndpoint = `${apiUrl}/api/v1/end-to-end`;
-      const res = await fetch(targetEndpoint, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/end-to-end`, {
         method: 'POST',
         body: formData,
       });
@@ -123,10 +98,7 @@ export const App: React.FC = () => {
       const data: AnalysisResponse = await res.json();
       setResult(data);
     } catch (err: unknown) {
-      let msg = err instanceof Error ? err.message : 'Unknown network failure';
-      if (msg === 'Failed to fetch' || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) {
-        msg = `Failed to connect to backend at "${apiUrl}". If your backend is hosted on Render, ensure the service is active and configure the URL above.`;
-      }
+      const msg = err instanceof Error ? err.message : 'Could not connect to backend server. Make sure the backend service is running.';
       setError(msg);
     } finally {
       setLoading(false);
@@ -149,7 +121,7 @@ export const App: React.FC = () => {
 
     try {
       setTtsPlaying(true);
-      const res = await fetch(`${apiUrl}/api/v1/synthesize`, {
+      const res = await fetch(`${API_BASE_URL}/api/v1/synthesize`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -174,10 +146,7 @@ export const App: React.FC = () => {
         }
       }
     } catch (err: unknown) {
-      let msg = err instanceof Error ? err.message : 'Failed to generate voice guidance.';
-      if (msg === 'Failed to fetch' || msg.toLowerCase().includes('failed to fetch') || msg.toLowerCase().includes('networkerror')) {
-        msg = `Failed to connect to TTS service at "${apiUrl}". Please check backend connection.`;
-      }
+      const msg = err instanceof Error ? err.message : 'Failed to generate voice guidance.';
       setError(msg);
       setTtsPlaying(false);
     }
@@ -257,77 +226,12 @@ export const App: React.FC = () => {
       {/* Main Content Area */}
       <main className="max-w-2xl w-full mx-auto px-4 py-12">
         {/* Simple Header */}
-        <header className="border-b border-neutral-800 pb-6 mb-8 flex items-center justify-between">
-          <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">VoiceShield AI</h1>
-            <p className="text-sm text-neutral-400 mt-1">
-              Scam call detection system for Hindi, Hinglish, and English
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={() => setShowApiConfig(!showApiConfig)}
-            className="flex items-center gap-1.5 text-xs text-neutral-400 hover:text-neutral-200 border border-neutral-800 hover:border-neutral-700 bg-neutral-900 px-3 py-1.5 rounded transition-colors"
-            title="Configure Backend API URL"
-          >
-            <Settings className="w-3.5 h-3.5" />
-            <span className="hidden sm:inline">API Config</span>
-          </button>
+        <header className="border-b border-neutral-800 pb-6 mb-8">
+          <h1 className="text-2xl font-bold tracking-tight text-white">VoiceShield AI</h1>
+          <p className="text-sm text-neutral-400 mt-1">
+            Scam call detection system for Hindi, Hinglish, and English
+          </p>
         </header>
-
-        {/* API URL Config Section */}
-        {showApiConfig && (
-          <div className="border border-neutral-800 rounded-lg p-4 bg-neutral-950 mb-6 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-neutral-300 flex items-center gap-1.5">
-                <Globe className="w-3.5 h-3.5 text-neutral-400" />
-                Backend API URL
-              </span>
-              <span className="text-[11px] text-neutral-500">Saved in browser</span>
-            </div>
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={apiUrl}
-                onChange={(e) => handleApiUrlChange(e.target.value)}
-                placeholder="https://your-backend.onrender.com"
-                className="flex-1 bg-neutral-900 border border-neutral-800 text-neutral-200 text-xs rounded px-3 py-2 font-mono focus:outline-none focus:border-neutral-600"
-              />
-              <button
-                type="button"
-                onClick={() => handleApiUrlChange(DEFAULT_API_URL)}
-                className="text-xs bg-neutral-800 hover:bg-neutral-700 text-neutral-300 px-3 py-2 rounded transition-colors shrink-0"
-              >
-                Reset
-              </button>
-            </div>
-            <p className="text-[11px] text-neutral-500">
-              Set this to your Render service URL (e.g. <code className="text-neutral-400">https://voiceshield-ai.onrender.com</code>).
-            </p>
-          </div>
-        )}
-
-        {/* Remote Domain Localhost Warning */}
-        {isRemoteDomainWithLocalApi && !showApiConfig && (
-          <div className="border border-amber-500/40 bg-amber-500/10 rounded-lg p-4 mb-6 flex items-start justify-between gap-3 text-amber-200 text-xs">
-            <div className="flex items-start gap-2">
-              <AlertCircle className="w-4 h-4 text-amber-400 mt-0.5 shrink-0" />
-              <div>
-                <p className="font-semibold text-amber-300">Backend URL points to localhost</p>
-                <p className="text-amber-200/80 mt-0.5">
-                  Your site is online, but attempting to reach <code className="bg-amber-950/60 px-1 py-0.5 rounded text-amber-300">{apiUrl}</code>. Click "Set Backend URL" to connect to your Render backend.
-                </p>
-              </div>
-            </div>
-            <button
-              type="button"
-              onClick={() => setShowApiConfig(true)}
-              className="shrink-0 bg-amber-500/20 hover:bg-amber-500/30 text-amber-300 border border-amber-500/30 px-2.5 py-1 rounded text-xs transition-colors"
-            >
-              Set Backend URL
-            </button>
-          </div>
-        )}
 
         <div className="space-y-6">
           {/* File Upload Box */}
